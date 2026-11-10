@@ -160,5 +160,14 @@ class VendorTest(unittest.TestCase):
             self.assertNotIn(b"\r", f.read())
 
 
+    def test_version_file_written_and_loaded_first(self):
+        self.assert_ok(self.run_vendor(ref="f285a2b"))
+        version = read(os.path.join(self.dest, "Version.lua"))
+        self.assertIn('RXP_SGJ_VERSION = "3.3.2-Forever"', version)
+        self.assertIn('RXP_SGJ_COMMIT = "f285a2b"', version)
+        xml = read(os.path.join(self.dest, "sgj.xml"))
+        self.assertLess(xml.index('SGJ\\Version.lua'), xml.index('SGJ\\Libs\\LibStub\\LibStub.lua'))
+
+
 if __name__ == "__main__":
     unittest.main()

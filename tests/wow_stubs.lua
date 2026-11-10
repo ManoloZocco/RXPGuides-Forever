@@ -47,6 +47,7 @@ function Stubs.newFrame(name)
     function f:UnregisterEvent(e) self.events[e] = nil end
     function f:SetScript(k, fn) self.scripts[k] = fn end
     function f:GetScript(k) return self.scripts[k] end
+    function f:HasScript(k) return true end
     function f:HookScript(k, fn)
         local prev = self.scripts[k]
         self.scripts[k] = function(...) if prev then prev(...) end fn(...) end

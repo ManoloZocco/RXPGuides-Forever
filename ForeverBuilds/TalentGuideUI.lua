@@ -177,7 +177,10 @@ end
 
 -- /rxpfb talents: show or hide the panel without the talent window.
 function UI.Toggle()
-    if not UI.panel then CreatePanel(UIParent, nil) end
+    if not UI.panel then
+        CreatePanel(UIParent, nil)
+        UI.panel:Hide() -- new frames start shown; the toggle below shows it
+    end
     if UI.panel:IsShown() then UI.panel:Hide() else UI.panel:Show(); Redraw() end
 end
 
