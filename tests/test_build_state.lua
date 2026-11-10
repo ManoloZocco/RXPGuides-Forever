@@ -110,4 +110,13 @@ function T.test_init_noop_when_disabled()
     assert_eq(engine.GetTalentBuildRoleForGroup, nil)
 end
 
+function T.test_no_current_rank_without_trait_data()
+    local S, engine, ui = setup()
+    engine.ForEachTraitTalent = function() return false end
+    S.Set(1, CAT)
+    local call = ui.calls[#ui.calls]
+    assert_eq(call.currentRank, nil, "ranks unknown until the trait tree is readable")
+    assert_eq(#call.steps, 51)
+end
+
 return T

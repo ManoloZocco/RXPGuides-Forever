@@ -96,10 +96,11 @@ function S.Apply(reason)
         local index = Index(group)
         local R = RXP_FB.TalentResolver
         steps, warnings = RXP_FB.TalentPath.Build(build, function(id) return R.Resolve(index, id) end)
-        currentRank = function(spellID)
+        -- nil while the trait tree is not readable yet (early login): ranks are unknown, not zero
+        currentRank = index and function(spellID)
             local e = R.Resolve(index, spellID)
             return e and e.rank or 0
-        end
+        end or nil
     end
     local UI = RXP_FB.TalentGuideUI
     if UI and UI.Update then UI.Update(build, steps, warnings or {}, reason, currentRank) end

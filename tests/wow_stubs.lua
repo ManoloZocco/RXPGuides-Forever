@@ -28,6 +28,19 @@ local function newFontString()
     return fs
 end
 
+function Stubs.newTexture()
+    local tx = { shown = true, points = {} }
+    for _, m in ipairs({ "SetAllPoints", "SetTexture", "SetColorTexture", "SetBlendMode", "SetVertexColor", "SetSize", "SetAtlas", "SetDrawLayer" }) do
+        tx[m] = function(self, ...) self[m .. "Args"] = { ... } end
+    end
+    function tx:SetPoint(...) self.points[#self.points + 1] = { ... } end
+    function tx:ClearAllPoints() self.points = {} end
+    function tx:Show() self.shown = true end
+    function tx:Hide() self.shown = false end
+    function tx:IsShown() return self.shown end
+    return tx
+end
+
 function Stubs.newFrame(name)
     local f = { name = name, events = {}, scripts = {}, shown = true, children = {}, points = {} }
     function f:RegisterEvent(e) self.events[e] = true end
@@ -48,6 +61,24 @@ function Stubs.newFrame(name)
     function f:IsShown() return self.shown end
     function f:SetPoint(...) self.points[#self.points + 1] = { ... } end
     function f:SetParent(p) self.parent = p end
+    function f:CreateTexture()
+        local tx = Stubs.newTexture()
+        self.textures = self.textures or {}
+        self.textures[#self.textures + 1] = tx
+        return tx
+    end
+    function f:SetSize(w, h) self.width, self.height = w, h end
+    function f:SetWidth(w) self.width = w end
+    function f:SetHeight(h) self.height = h end
+    function f:GetWidth() return self.width or 40 end
+    function f:GetHeight() return self.height or 40 end
+    function f:ClearAllPoints() self.points = {} end
+    function f:SetMovable() end
+    function f:EnableMouse() end
+    function f:RegisterForDrag() end
+    function f:SetFrameStrata() end
+    function f:StartMoving() end
+    function f:StopMovingOrSizing() end
     return f
 end
 
