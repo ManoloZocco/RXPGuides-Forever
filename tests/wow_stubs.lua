@@ -123,4 +123,10 @@ function Stubs.install(opts)
     return ctx
 end
 
+-- Load an addon file the way WoW does: the chunk receives (addonName, addonTable).
+function Stubs.loadAddonFile(path, addon)
+    local chunk = assert(loadfile(path))
+    return chunk("RXPGuides", addon or {})
+end
+
 return Stubs
