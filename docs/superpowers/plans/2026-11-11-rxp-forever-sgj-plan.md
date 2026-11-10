@@ -32,9 +32,9 @@
 
 ## Review Focus
 
-1. **Personaggio sotto il livello 10 o senza punti spesi:** nessun errore Lua. La guida si registra comunque e l'evidenziazione parte al 10. Test: Task 6, `test_guide_levels_start_at_10`.
+1. **Personaggio sotto il livello 10 o senza punti spesi:** nessun errore Lua; nessun passo "disponibile", il riquadro mostra i prossimi a partire dal 10. Test: Task 6, `test_path_levels_start_at_10` e `test_pending_below_10_is_empty`.
 2. **Stesso talento in più blocchi** (es. `17056, 3` poi `17056, 1`): il grado deve proseguire, cioè 4 e non 1. Test: Task 6, `test_rank_accumulates_across_blocks`.
-3. **Talento non risolto** (spellID che non corrisponde a nessun talento dell'albero): passo vuoto con commento `UNRESOLVED`, livelli successivi non spostati, avviso. Test: Task 6, `test_unresolved_keeps_alignment`.
+3. **Talento non risolto** (spellID senza nodo nell'albero): passo con `resolved=false`, livelli successivi non spostati, avviso. Test: Task 6, `test_unresolved_keeps_alignment`.
 4. **Addon standalone Sharpie's installato:** il motore incorporato non parte, si vede un solo avviso in chat e non compare nessun errore su nomi globali in conflitto. Test: Task 3, `test_disabled_when_standalone_enabled`. Verifica in gioco: checklist punto 8.
 5. **Build salvata non più esistente dopo un aggiornamento di Sharpie's:** `BuildState` torna a `"AUTO"` senza errori. Test: Task 7, `test_unknown_build_falls_back_to_auto`.
 
@@ -116,24 +116,32 @@
   La riga `# FORK:` che spiega il blocco va subito sopra.
 - [ ] **Step 4:** Commit `feat: load embedded SGJ engine on Forever`.
 
-### Task 4: Risoluzione talenti (spellID → posizione)
+### Task 4: Risoluzione talenti sull'albero Forever (C_Traits tramite il motore)
+
+> Rivisto il 2026-11-11: Forever non ha `GetTalentInfo` (spec §7.4).
 
 **Files:**
 - Create: `ForeverBuilds/TalentResolver.lua`, `tests/test_talent_resolver.lua`
 
 **Interfaces:**
-- Produces: modulo `RXP_FB.TalentResolver`, dove `RXP_FB` è la tabella globale del codice nuovo, creata in `Bootstrap.lua` come `RXP_FB = RXP_FB or {}`.
-  - `TalentResolver.BuildIndex() -> index`: `index[name] = { tab=int, row=int, col=int, maxRank=int, talentIndex=int }`. Si costruisce da `GetTalentInfo(tab, i)` (name, icon, tier, column, rank, maxRank).
-  - `TalentResolver.Resolve(index, spellID) -> pos|nil, name|nil`: il nome viene da `GetSpellInfo(spellID)`.
-  - `TalentResolver.TreeName(tab) -> string`: viene da `GetTalentTabInfo(tab)`. Su Classic il nome è il primo valore restituito.
+- Consumes: `forEach(fn)`, cioè `RXP_SGJ_NS.ForEachTraitTalent` parzialmente applicato. Chiama `fn(name, rank, tab, node, spellID)` per ogni nodo con nome, dove `node.ID` è il nodeID e `node.maxRanks` il grado massimo, e restituisce `false` se il client non ha la configurazione dei trait.
+- Produces: `RXP_FB.TalentResolver`.
+  - `BuildIndex(forEach) -> index|nil`: `index.bySpell[spellID]` e `index.byName[lower(name)]` contengono `{ name=, tab=, nodeID=, maxRank=, rank= }`. Restituisce `nil` se `forEach` restituisce `false`.
+  - `Resolve(index, spellID) -> entry|nil`: cerca prima per spellID, poi per nome tramite `SpellName(spellID)`.
+  - `SpellName(spellID) -> string|nil`: usa `C_Spell.GetSpellName` se esiste, altrimenti `GetSpellInfo`.
+  - `TREE_NAMES[CLASS][tab]`: nomi Classic in ordine Classic, per esempio `DRUID = {"Balance","Feral Combat","Restoration"}`, per tutte e 9 le classi.
+  - `TreeName(class, tab) -> string`, con fallback `"Tree " .. tab`.
 
-- [ ] **Step 1:** Test con `Stubs.install` (2 tab, 3 talenti):
-  - `test_index_by_name`;
-  - `test_resolve_known_spell` restituisce `{tab=2,row=1,col=2,maxRank=5,...}`;
-  - `test_resolve_unknown_spell_returns_nil`, sia per uno spellID senza nome sia per un nome non presente nell'albero.
+- [ ] **Step 1:** Test con un `forEach` finto:
+  - `test_index_by_spell_and_name`;
+  - `test_resolve_by_spell_id`;
+  - `test_resolve_falls_back_to_name` (spellID diverso, stesso nome tramite `C_Spell.GetSpellName`);
+  - `test_resolve_unknown_returns_nil`;
+  - `test_no_trait_config_returns_nil`;
+  - `test_tree_names_all_classes` (9 classi da 3 alberi ciascuna).
   Esegui i test: devono fallire.
 - [ ] **Step 2:** Implementa. Esegui i test, che devono passare.
-- [ ] **Step 3:** Commit `feat: resolve talent spell IDs to tree positions`.
+- [ ] **Step 3:** Commit `feat: resolve build talents on the Forever trait tree`.
 
 ### Task 5: Catalogo build
 
@@ -148,7 +156,7 @@
   - `points` = somma dei gradi
   - `complete = points == 51`
   - `mainTab` = il tab con più punti (in parità vince il primo)
-  - `label = prettyName .. " – " .. treeNameOf(mainTab)`, più `" (variant N)"` se un'altra build ha la stessa etichetta, più `" (incomplete: P/51)"` se la build non è completa. `treeNameOf` è un parametro opzionale: senza, l'etichetta usa `"Tree " .. mainTab`.
+  - `label = prettyName .. " – " .. treeNameOf(mainTab)`, più `" (variant N)"` se un'altra build ha la stessa etichetta, più `" (incomplete: P/51)"` se la build non è completa. `treeNameOf(tab)` è un parametro opzionale; in gioco vale `function(tab) return TalentResolver.TreeName(class, tab) end`, e senza parametro l'etichetta usa `"Tree " .. mainTab`. In gioco `treeOf(spellID)` è `Resolve(index, spellID).tab` (Task 4).
 - `RXP_FB.BuildCatalog.Find(builds, id) -> build|nil`.
 
 - [ ] **Step 1:** Test sulla fixture:
@@ -168,33 +176,30 @@
   Il test stampa l'elenco delle build incomplete per classe, senza farle fallire. Esegui i test, che devono passare.
 - [ ] **Step 4:** Commit `feat: build catalog from SGJ BuildMatch`.
 
-### Task 6: Generatore di guide talenti
+### Task 6: Percorso talenti per livello
+
+> Rivisto il 2026-11-11: produce passi strutturati, non più il testo guida di RestedXP.
 
 **Files:**
-- Create: `ForeverBuilds/TalentGuideGen.lua`, `tests/test_talent_guide_gen.lua`
+- Create: `ForeverBuilds/TalentPath.lua`, `tests/test_talent_path.lua`
 
 **Interfaces:**
-- Consumes: `build` (Task 5), `resolve(spellID) -> pos|nil, name|nil` (Task 4, parzialmente applicato all'indice).
-- Produces: `RXP_FB.TalentGuideGen.Build(build, resolve) -> text, warnings`.
-  - `text` è una guida nel formato RestedXP, con le intestazioni:
-    - `#key FOREVER - <build.id>`
-    - `#name <build.label>`
-    - `#minLevel 10`
-    - `#maxLevel <9 + build.points>`
-  - Ogni passo è una coppia di righe: `level -- <name> (Rank r)` e poi `    .talent tab,row,col,r`.
-  - Un talento non risolto produce solo la riga `level -- UNRESOLVED <name or spellID> (Rank r)`, senza `.talent`.
-  - `warnings` è una lista di stringhe del tipo `"UNRESOLVED <spellID> at level <L>"`.
-  - Il grado `r` è il grado cumulativo di quel talento.
+- Consumes: `build` (Task 5) e `resolve(spellID) -> entry|nil` (Task 4, applicato all'indice).
+- Produces: `RXP_FB.TalentPath`.
+  - `Build(build, resolve) -> steps, warnings`. `steps[i] = { level = 9 + i, spellID=, name=, rank=, maxRank=|nil, tab=|nil, nodeID=|nil, resolved=bool }`. `rank` è il grado cumulativo di quello spellID. `name` viene da `entry.name`, altrimenti da `TalentResolver.SpellName(spellID)`, altrimenti `"spell " .. spellID`. `warnings` contiene `"UNRESOLVED <spellID> at level <L>"`.
+  - `Pending(steps, playerLevel, currentRank) -> available, upcoming`, dove `currentRank(spellID) -> int`. Un passo è fatto se `currentRank(spellID) >= step.rank`. `available` contiene i passi non fatti con `level <= playerLevel`, in ordine. `upcoming` contiene al massimo 3 passi non fatti con `level > playerLevel`.
+  - `FormatStep(step, class) -> string`: `"Lv 23: Ferocity (4/5) – Feral Combat"`. Senza `maxRank`: `"(4)"`. Se il passo non è risolto, si aggiunge `" [not found]"`.
 
-- [ ] **Step 1:** Test con un `resolve` stub:
-  - `test_guide_levels_start_at_10`: il primo passo è il livello 10, e il numero di righe `level` è uguale a `points`.
-  - `test_rank_accumulates_across_blocks`: con `{17056,3, 16934,1, 17056,1}` i passi sono 17056 r1, r2, r3, poi 16934 r1, poi 17056 r4.
-  - `test_unresolved_keeps_alignment`: lo spellID nel mezzo non viene risolto. Il passo resta, senza `.talent`, e i livelli successivi non si spostano. `warnings` ha una voce con il livello giusto.
-  - `test_header_tags`: `#key`, `#name`, `#minLevel 10`, `#maxLevel`.
-  - `test_parses_with_rxp_parser`: carica `Talents.lua` di RestedXP con gli stub (`addon.talents.functions.talent` reale) e verifica che `addon.talents:ParseGuide(text)` restituisca una guida con `#steps == points`. Se caricare `Talents.lua` sotto stub è troppo costoso, lo si sostituisce con un controllo regex sul formato di ogni riga, e la scelta va scritta nel commit.
+- [ ] **Step 1:** Test:
+  - `test_path_levels_start_at_10`: il primo passo è al livello 10 e `#steps == build.points`.
+  - `test_rank_accumulates_across_blocks`: `{17056,3, 16934,1, 17056,1}` dà r1, r2, r3, poi r1, poi r4.
+  - `test_unresolved_keeps_alignment`.
+  - `test_pending_available_and_upcoming`: a livello 14, con i gradi attuali che coprono i primi 3 passi, `available` contiene i passi 4 e 5 e `upcoming` i passi 6, 7 e 8.
+  - `test_pending_below_10_is_empty`: a livello 5, `available` è vuota e `upcoming` contiene i primi 3 passi.
+  - `test_format_step`.
   Esegui i test: devono fallire.
 - [ ] **Step 2:** Implementa. Esegui i test, che devono passare.
-- [ ] **Step 3:** Commit `feat: generate per-level talent guides from builds`.
+- [ ] **Step 3:** Commit `feat: per-level talent path from builds`.
 
 ### Task 7: Stato build, collegamento al motore e alle guide
 
@@ -202,24 +207,23 @@
 - Create: `ForeverBuilds/BuildState.lua`, `tests/test_build_state.lua`
 
 **Interfaces:**
-- Consumes: Task 4, 5 e 6. Dal motore usa `RXP_SGJ_NS.SetTalentBuildRole(leveling, endgame, pvp)` (con tutti `nil` cancella la scelta), `RXP_SGJ_NS.GetActiveSpecGroup() -> 1|2` e `RXP_SGJ_NS.BuildMatch`, `RXP_SGJ_NS.PrettyNames`. Da RestedXP usa `addon.talents.RegisterGuide(text)` e `addon.talents:UpdateSelectedGuide(key)`.
+- Consumes: Task 4, 5 e 6. Dal motore usa `RXP_SGJ_NS.SetTalentBuildRole(leveling, endgame, pvp)` (con tutti `nil` cancella la scelta), `RXP_SGJ_NS.GetActiveSpecGroup() -> 1|2` e `RXP_SGJ_NS.BuildMatch`, `RXP_SGJ_NS.PrettyNames`. Usa anche `RXP_SGJ_NS.ForEachTraitTalent`.
 - Produces: `RXP_FB.BuildState` con:
   - `Get(group) -> id|"AUTO"`. Se l'id non esiste nel catalogo restituisce `"AUTO"` e ripulisce il valore salvato.
   - `Set(group, id)`: salva e chiama `Apply()`.
   - `Builds() -> builds`: catalogo della classe del giocatore, memorizzato in cache.
   - `RoleFor(group) -> {leveling=,endgame=,pvp=}|nil`.
-  - `Apply()`: per il gruppo attivo chiama `SetTalentBuildRole`. Se la build non è `"AUTO"`, genera e registra la guida (una sola volta per id) e la seleziona. Infine richiama `RXP_FB.TalentWarning.Update(build, warnings)` (Task 9).
-  - `Init()`: definisce `RXP_SGJ_NS.GetTalentBuildRoleForGroup = function(g) return RXP_FB.BuildState.RoleFor(g) end` e registra `PLAYER_LOGIN` (dopo `ForceInit` del motore), `ACTIVE_TALENT_GROUP_CHANGED` e `PLAYER_LEVEL_UP`, che chiamano `Apply()`.
+  - `Apply()`: per il gruppo attivo chiama `SetTalentBuildRole`. Se la build non è `"AUTO"`, ricostruisce l'indice (Task 4) e i passi (Task 6). Poi chiama `RXP_FB.TalentGuideUI.Update(build|nil, steps|nil, warnings)` (Task 9).
+  - `Init()`: definisce `RXP_SGJ_NS.GetTalentBuildRoleForGroup = function(g) return RXP_FB.BuildState.RoleFor(g) end` e registra `PLAYER_LOGIN` (dopo `ForceInit` del motore), `ACTIVE_TALENT_GROUP_CHANGED`, `PLAYER_LEVEL_UP`, `PLAYER_TALENT_UPDATE`, `CHARACTER_POINTS_CHANGED` e `TRAIT_CONFIG_UPDATED` (con `pcall`), che chiamano `Apply()`. Il cambio di livello è passato all'interfaccia come argomento: `Apply("levelup")`.
   - Se `RXP_SGJ_DISABLED` è vero, `Init()` non fa nulla.
 
-- [ ] **Step 1:** Test con stub di `RXPCData`, `RXP_SGJ_NS` (con `SetTalentBuildRole` spia) e `addon.talents` spia:
+- [ ] **Step 1:** Test con stub di `RXPCData`, `RXP_SGJ_NS` (con `SetTalentBuildRole` spia e `ForEachTraitTalent` finto) e `RXP_FB.TalentGuideUI` spia:
   - `test_default_is_auto`.
   - `test_set_persists_per_group`.
   - `test_unknown_build_falls_back_to_auto`.
-  - `test_apply_auto_clears_role`: la spia riceve `(nil, nil, nil)` e nessuna guida viene registrata.
-  - `test_apply_build_sets_role_and_selects_guide`: la spia riceve `("Leveling","CAT_RAID",false)`. `UpdateSelectedGuide` riceve `"FOREVER - Leveling|CAT_RAID|10"`.
+  - `test_apply_auto_clears_role`: la spia riceve `(nil, nil, nil)` e `TalentGuideUI.Update` riceve `build == nil`.
+  - `test_apply_build_sets_role_and_updates_ui`: la spia riceve `("Leveling","CAT_RAID",false)`. `TalentGuideUI.Update` riceve la build con id `"Leveling|CAT_RAID|10"` e `#steps == 51`.
   - `test_other_group_role_for_tooltip`: con il gruppo 2 impostato su bear, `RoleFor(2).leveling == "Leveling_Bear"`.
-  - `test_guide_registered_once`.
   Esegui i test: devono fallire.
 - [ ] **Step 2:** Implementa. Esegui i test, che devono passare.
 - [ ] **Step 3:** Commit `feat: per-spec build state driving engine and talent guide`.
@@ -249,33 +253,53 @@
 - [ ] **Step 2:** Implementa e aggiungi la riga `-- FORK:`. Esegui i test, che devono passare.
 - [ ] **Step 3:** Commit `feat: Forever Build options in RestedXP settings`.
 
-### Task 9: Guide talenti di RestedXP su Forever e avviso nel pannello talenti
+### Task 9: Riquadro talenti, messaggio in chat, evidenziazione
+
+> Rivisto il 2026-11-11: sostituisce l'estensione delle guide talenti di RestedXP, che su Forever non possono funzionare. **Nessuna modifica a `Talents.lua`.**
 
 **Files:**
-- Create: `ForeverBuilds/TalentWarning.lua`, `tests/test_talent_warning.lua`
-- Modify: `Talents.lua`, con righe `-- FORK:`. Il ramo `elseif addon.game == "CLASSIC" then` per la posizione del pulsante (riga 264 nella v4.11.34) diventa `elseif addon.game == "CLASSIC" or addon.game == "FOREVER" then`. Vanno controllati anche gli altri confronti `addon.game == "CLASSIC"` in `Talents.lua` (righe 144 e 2459/2486 di `RXPGuides.lua` sono fuori scopo): si estende solo dove serve a mostrare ed evidenziare la guida, e la scelta per ogni riga si documenta nel commit.
+- Create: `ForeverBuilds/TalentGuideUI.lua`, `tests/test_talent_guide_ui.lua`
 
 **Interfaces:**
-- Produces: `RXP_FB.TalentWarning.Update(build|nil, warnings)` crea, se non esiste ancora, un FontString ancorato in cima a `PlayerTalentFrame`, che si carica su richiesta: la creazione aspetta `ADDON_LOADED` di `Blizzard_TalentUI`. Testi:
-  - build `"AUTO"` o `nil`: `"Forever Build: choose a build in RestedXP settings for a talent guide."`;
-  - build incompleta: `"Incomplete talent order (P/51): some levels may not match the build."`;
-  - con `warnings`, si aggiunge `"N talents could not be matched."`;
-  - build completa senza warnings: nascosto.
+- Consumes: `RXP_FB.TalentPath.Pending/FormatStep` (Task 6), `RXP_FB.TalentResolver` (Task 4), `UnitLevel`, `UnitClass`.
+- Produces: `RXP_FB.TalentGuideUI`.
+  - `Update(build|nil, steps|nil, warnings, reason)` salva lo stato e ridisegna. Con `reason == "levelup"`, oppure al primo `Update` dopo il login con punti disponibili, stampa in chat `"RestedXP Forever: level <L> talent: <FormatStep(available[1])>"`. Se non ci sono passi disponibili non stampa nulla.
+  - `Lines() -> {string}` è il contenuto del riquadro, testabile:
+    - riga 1 `"Forever Build: <label>"` oppure `"Forever Build: Automatic (no talent guide)"`;
+    - poi `"Now:"` seguito dai passi disponibili, oppure `"Now: nothing to spend"`;
+    - poi `"Next:"` seguito dai passi successivi;
+    - poi le righe di avviso:
+      - build incompleta: `"Incomplete talent order (P/51): some levels may not match the build."`;
+      - con warnings: `"N talents could not be matched."`;
+      - in AUTO: `"Choose a build in RestedXP settings > Forever Build."`.
+  - `Attach()`: al `ADDON_LOADED` di `Blizzard_PlayerSpells`, o subito se `PlayerSpellsFrame` esiste già, crea il riquadro (Frame con FontString, ancorato a `TOPLEFT` del lato destro del frame talenti) e lo mostra e nasconde insieme alla finestra tramite `HookScript("OnShow"/"OnHide")`.
+  - `HighlightTarget() -> button|nil`: cerca `PlayerSpellsFrame.TalentsFrame` o `ClassTalentFrame.TalentsTab`, poi `:GetTalentButtonByNodeID(available[1].nodeID)`. Ogni chiamata è in `pcall`. Il glow è una texture creata sul pulsante, con un solo glow attivo alla volta.
+  - `HighlightAvailable() -> bool` serve alla diagnostica.
 
-- [ ] **Step 1:** Test con stub di `CreateFrame` e FontString: `test_auto_message`, `test_incomplete_message`, `test_unresolved_appended`, `test_hidden_when_complete`, `test_deferred_until_talent_ui_loaded`. Esegui i test: devono fallire.
-- [ ] **Step 2:** Implementa e applica le righe `-- FORK:` a `Talents.lua`. Esegui i test, che devono passare. Verifica la sintassi di `Talents.lua` con `luajit -bl Talents.lua >/dev/null`.
-- [ ] **Step 3:** Commit `feat: talent guide UI on Forever with incomplete/unresolved warning`.
+- [ ] **Step 1:** Test con stub di frame e di `PlayerSpellsFrame` finto:
+  - `test_lines_auto`;
+  - `test_lines_now_and_next`;
+  - `test_lines_incomplete_and_unresolved`;
+  - `test_levelup_prints_next_talent`;
+  - `test_no_print_when_nothing_available`;
+  - `test_highlight_uses_node_button` (il finto `GetTalentButtonByNodeID` riceve il nodeID del primo passo disponibile);
+  - `test_highlight_absent_frame_is_silent` (nessun errore, `HighlightAvailable() == false`);
+  - `test_panel_follows_talent_frame_visibility`.
+  Esegui i test: devono fallire.
+- [ ] **Step 2:** Implementa. Esegui i test, che devono passare.
+- [ ] **Step 3:** Commit `feat: talent guide panel, chat hint and node highlight on Forever`.
 
 ### Task 10: Diagnostica, documentazione, installazione
 
 **Files:**
 - Create: `ForeverBuilds/Diagnostics.lua`, `docs/UPDATING.md`, `README-FORK.md`
-- Modify: `ForeverBuilds/ForeverBuilds.xml`, che deve caricare nell'ordine `TalentResolver`, `BuildCatalog`, `TalentGuideGen`, `TalentWarning`, `BuildState`, `Options`, `Diagnostics`, più una riga finale che chiama `RXP_FB.BuildState.Init()`.
+- Modify: `ForeverBuilds/ForeverBuilds.xml`, che deve caricare nell'ordine `TalentResolver`, `BuildCatalog`, `TalentPath`, `TalentGuideUI`, `BuildState`, `Options`, `Diagnostics`, più una riga finale che chiama `RXP_FB.BuildState.Init()`.
 
 **Interfaces:**
 - Produces:
   - comando `/rxpfb`: stampa la build attiva per entrambi i gruppi, l'esito di `MSC.MatchTalentBuild` e la versione del motore (`RXP_SGJ_NS.API.GetVersion()`);
-  - `/rxpfb check`: per ogni build della classe del personaggio genera la guida e stampa `OK <label>` oppure `<label>: N unresolved (<spellIDs>)`.
+  - `/rxpfb check`: per ogni build della classe del personaggio calcola il percorso e stampa `OK <label>` oppure `<label>: N unresolved (<spellIDs>)`. Stampa anche `highlight: available|unavailable (<frame trovato o motivo>)`.
+  - `/rxpfb talents`: mostra o nasconde il riquadro talenti anche senza la finestra talenti aperta.
   Per le altre classi la verifica completa si fa solo entrando con un personaggio di quella classe, perché l'albero talenti è leggibile solo per la propria. Lo dice la documentazione.
 
 - [ ] **Step 1:** Implementa `Diagnostics.lua`. Esegui l'intera suite: `luajit tests/run.lua` e `python3 -I -m unittest tests/test_vendor.py` devono passare tutti.

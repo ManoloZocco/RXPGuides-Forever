@@ -17,7 +17,7 @@ Oggi RestedXP su Forever non fa né l'uno né l'altro. Item Upgrades è disattiv
 - O1. Un **fork personale di RestedXP** in un **repo GitHub privato** sull'account `ManoloZocco`, installabile in `_forever_/Interface/AddOns/RXPGuides`.
 - O2. **Tutte le classi e tutti i profili di leveling** di Sharpie's su Forever: solo e dungeon, compresi orso, tank e healer.
 - O3. **Scelta della build** nelle impostazioni di RestedXP, unico punto di controllo.
-- O4. **Guida talenti per livello** su Forever, generata dall'ordine dei punti della build scelta, mostrata con il sistema talenti di RestedXP (evidenziazione nella finestra talenti).
+- O4. **Guida talenti per livello** su Forever, generata dall'ordine dei punti della build scelta. Viene mostrata con un **riquadro dei prossimi talenti** accanto alla finestra talenti, un **messaggio in chat** a ogni livello e l'**evidenziazione del nodo** da prendere nella finestra talenti moderna (best effort). Vedi §7.4, revisione 2026-11-11.
 - O5. **Valutazione oggetti con il motore di Sharpie's**, incorporato nel fork, che segue la build scelta.
 - O6. **Visualizzazione oggetti come in Sharpie's, completa:**
   - verdetto nel tooltip (con dettaglio tenendo premuto Shift);
@@ -93,12 +93,19 @@ Oggi RestedXP su Forever non fa né l'uno né l'altro. Item Upgrades è disattiv
 - Collegamento al motore: impostare `MSC.TalentBuildRole`, che `MSC.GetBuildRole()` (`Dynamic_Engine.lua:610`) restituisce per primo, con la struttura che ritorna da `MSC.MatchTalentBuild`. Va verificato nel codice che è il meccanismo giusto e completo.
 - La scelta viene salvata **per personaggio**.
 
-### 7.4 Guida talenti per livello
-- **Fonte:** `MSC.BuildMatch[CLASSE]` (`Data/BuildMatch_Forever.lua`). Ogni voce è `{ fase-leveling?, ruolo leveling, profilo 60, priorità, { spellID, gradi, spellID, gradi, ... } }`, con i talenti nell'ordine in cui si prendono.
-- **Semantica da chiarire nel piano:** ci sono più voci di leveling per ruolo (priorità 10/11, 31, 51, 111, 131 …) e voci con fase 0 (build complete a 60). Il builder deve capire da `MSC.MatchTalentBuild` e dal generatore citato nell'intestazione del file come scegliere **la** sequenza da mostrare per una build e da quale livello parte. La premessa è un punto talento per livello dal 10.
-- **Generazione:** in gioco, all'avvio o al cambio di build, si costruisce una guida nel formato di RestedXP (`addon.talents.RegisterGuide`, passi `level` con `.talent TAB,ROW,COLUMN,RANK`). Ogni spellID viene convertito nella posizione sull'albero abbinando il nome dell'incantesimo (`GetSpellInfo`) ai nomi restituiti da `GetTalentInfo(tab, index)`, che danno anche riga e colonna. Se serve, `Data/TalentSpellIDs_Forever.lua` aiuta per i casi ambigui. Un talento non abbinato viene segnalato con un avviso visibile e non viene mai saltato in silenzio.
-- **Sistema talenti di RestedXP su Forever:** oggi si carica (`Talents.lua [AllowLoadGameType ... camelot]`) ma ha rami solo per `CLASSIC`, come la posizione del pulsante in `Talents.lua:264`. Va esteso a `FOREVER`. Le guide talenti Classic di RestedXP vanno **escluse** su Forever. Oggi lo sono già per il controllo `addon.game ~= "CLASSIC"`.
-- Supporto a **talenti doppi** (Forever introduce la doppia specializzazione): fuori scopo per la v1, salvo che costi poco. In ogni caso si guida la spec attiva.
+### 7.4 Guida talenti per livello (rivista il 2026-11-11 dopo una scoperta in esecuzione)
+
+**Scoperta:** il client di Forever **non ha** l'API talenti Classic (`GetTalentInfo`, `GetNumTalents` e la forma tab/index di `GetTalentTabInfo` sono stati rimossi). La finestra talenti è quella moderna a nodi (`Blizzard_PlayerSpells`, sistema `C_Traits`), con i tre alberi Classic come gruppi di nodi, nell'ordine Classic. Fonte: `SGJ/Dynamic_Engine.lua`, righe 183-200. Il sistema guide talenti di RestedXP (`Talents.lua`, `PlayerTalentFrame`) quindi **non può funzionare su Forever** e non viene usato né modificato.
+
+**Decisione dell'utente:** lista più evidenziazione.
+
+- **Fonte dell'ordine:** `MSC.BuildMatch[CLASSE]` (righe di stage 1, vedi C1). Si prende un punto per livello a partire dal 10, e il grado di un talento prosegue tra blocchi diversi della lista.
+- **Risoluzione dei talenti:** in gioco si usa `RXP_SGJ_NS.ForEachTraitTalent(fn, group)` del motore, che restituisce `name, rank, tab, node, spellID` per ogni nodo. L'abbinamento si fa per spellID, con un fallback sul nome (`C_Spell.GetSpellName`). Si ricavano nodo, albero, grado massimo e grado attuale.
+- **Riquadro "prossimi talenti":** si aggancia accanto alla finestra talenti quando è aperta. Mostra il nome della build, i passi già disponibili (livello ≤ livello del personaggio, non ancora presi) e i 3 passi successivi, ciascuno come "Lv N: Talento (grado r/max) – Albero". Mostra anche gli avvisi: "AUTO, nessuna guida", ordine incompleto (C2), talenti non abbinati.
+- **Messaggio in chat:** si stampa a ogni salita di livello e al login quando ci sono punti disponibili non spesi, con il prossimo talento da prendere.
+- **Evidenziazione (best effort):** a finestra aperta, al nodo del prossimo passo disponibile si aggiunge un bordo luminoso. Il pulsante del nodo si trova tramite `GetTalentButtonByNodeID` sul frame talenti moderno (`PlayerSpellsFrame.TalentsFrame`, con alternativa `ClassTalentFrame.TalentsTab`). Se il frame o il metodo non esistono, niente evidenziazione e nessun errore. Il comando di diagnostica dice se l'evidenziazione è disponibile.
+- Si aggiorna su: cambio build, `PLAYER_LEVEL_UP`, `PLAYER_TALENT_UPDATE`, `CHARACTER_POINTS_CHANGED`, `TRAIT_CONFIG_UPDATED` (registrato con `pcall`) e `ACTIVE_TALENT_GROUP_CHANGED`.
+- Il tutto segue il gruppo di specializzazione attivo.
 
 ### 7.5 Aggiornamenti
 - **RestedXP:** merge o rebase da `upstream-rxp`. Le modifiche ai file di RestedXP sono poche e marcate `-- FORK:`, così i conflitti restano contenuti.
@@ -130,7 +137,7 @@ Oggi RestedXP su Forever non fa né l'uno né l'altro. Item Upgrades è disattiv
   4. All'arrivo di un upgrade da loot o quest compare l'avviso.
   4b. I segnalini compaiono su ricompense quest, mercante, tiro loot, professioni e scheda personaggio.
   5. Cambiando build cambiano subito sia il verdetto sia la guida talenti.
-  6. Nella finestra talenti viene evidenziato il talento giusto per il livello attuale e la build scelta.
+  6. Con la finestra talenti aperta compare il riquadro dei prossimi talenti, giusto per livello e build, e il nodo da prendere è evidenziato (se `/rxpfb` dice che l'evidenziazione è disponibile). A ogni livello arriva il messaggio in chat.
   7. Nessun pulsante minimappa o finestra di Sharpie's.
   8. Con l'addon Sharpie's standalone installato compare un avviso chiaro.
 - Il personaggio di prova è il druido dell'utente. Le altre classi si verificano almeno sul piano dei dati: ogni build ha i talenti abbinati senza avvisi, controllato con un comando di diagnostica in gioco.
