@@ -1,0 +1,83 @@
+--- a/Interface.lua
++++ b/Interface.lua
+@@ -4337,8 +4337,8 @@
+     MSC.OnScoringSettingsChanged()
+     print(MSC.L["|cff00ff00SGJ:|r Settings reset to defaults. /reload to refresh any open windows."])
+ end
+-SLASH_SGJ_WIPE1 = "/sgjwipe"
+-SlashCmdList["SGJ_WIPE"] = SGJWipeSettings
++-- vendor patch (no slash command): SLASH_SGJ_WIPE1 = "/sgjwipe"
++-- vendor patch (no slash command): SlashCmdList["SGJ_WIPE"] = SGJWipeSettings
+ 
+ local function SGJCheckCorrupt()
+     local bads = {}
+@@ -4360,8 +4360,8 @@
+         print("|cff00ff00SGJ:|r No corruption found in RXP_SGJ_Settings!")
+     end
+ end
+-SLASH_SGJ_CORRUPT1 = "/sgjcheck"
+-SlashCmdList["SGJ_CORRUPT"] = SGJCheckCorrupt
++-- vendor patch (no slash command): SLASH_SGJ_CORRUPT1 = "/sgjcheck"
++-- vendor patch (no slash command): SlashCmdList["SGJ_CORRUPT"] = SGJCheckCorrupt
+ 
+ local function SGJCheckCorrupt2()
+     local bads = {}
+@@ -4384,8 +4384,8 @@
+         print("|cff00ff00SGJ:|r No corruption found in other DBs either!")
+     end
+ end
+-SLASH_SGJ_CORRUPT_TWO1 = "/sgjcheck2"
+-SlashCmdList["SGJ_CORRUPT_TWO"] = SGJCheckCorrupt2
++-- vendor patch (no slash command): SLASH_SGJ_CORRUPT_TWO1 = "/sgjcheck2"
++-- vendor patch (no slash command): SlashCmdList["SGJ_CORRUPT_TWO"] = SGJCheckCorrupt2
+ 
+ local function ForceWriteSGJ()
+     print("|cff00ff00SGJ:|r Forcing save...")
+@@ -4394,8 +4394,8 @@
+     
+     print("ShowBagArrows is:", RXP_SGJ_Settings.ShowBagArrows)
+ end
+-SLASH_SGJ_FORCE1 = "/sgjforce"
+-SlashCmdList["SGJ_FORCE"] = ForceWriteSGJ
++-- vendor patch (no slash command): SLASH_SGJ_FORCE1 = "/sgjforce"
++-- vendor patch (no slash command): SlashCmdList["SGJ_FORCE"] = ForceWriteSGJ
+ 
+ -- ============================================================================
+ -- QUICK SAVE WORKAROUND (PTR/BETA SAVEDVARIABLES BUG FIX)
+@@ -4436,8 +4436,8 @@
+     StaticPopup_Show("SGJ_QUICK_SAVE")
+ end
+ 
+-SLASH_SGJ_SAVE1 = "/sgjsave"
+-SlashCmdList["SGJ_SAVE"] = QuickSaveSGJ
++-- vendor patch (no slash command): SLASH_SGJ_SAVE1 = "/sgjsave"
++-- vendor patch (no slash command): SlashCmdList["SGJ_SAVE"] = QuickSaveSGJ
+ 
+ -- Slot order/labels match Laboratory.lua's OrderedSlots so scalar dumps and
+ -- Lab imports read the same way.
+@@ -4453,8 +4453,8 @@
+     { slot = "RangedSlot", label = "Ranged" },
+ }
+ 
+-SLASH_SGJ_SCALAR1 = "/sgjscalar"
+-SlashCmdList["SGJ_SCALAR"] = function()
++-- vendor patch (no slash command): SLASH_SGJ_SCALAR1 = "/sgjscalar"
++local _ = function() -- vendor patch: not registered
+     local ratings = {
+         {id=2, name="Defense"}, {id=3, name="Dodge"}, {id=4, name="Parry"}, {id=5, name="Block"},
+         {id=6, name="Melee Hit"}, {id=7, name="Ranged Hit"}, {id=8, name="Spell Hit"},
+--- a/Judge.lua
++++ b/Judge.lua
+@@ -98,9 +98,9 @@
+     end
+ end)
+ 
+-SLASH_SHARPIESGEARJUDGE1 = "/sgj"
+-SLASH_SHARPIESGEARJUDGE2 = "/judge"
+-SlashCmdList["SHARPIESGEARJUDGE"] = function(msg) 
++-- vendor patch (no slash command): SLASH_SHARPIESGEARJUDGE1 = "/sgj"
++-- vendor patch (no slash command): SLASH_SHARPIESGEARJUDGE2 = "/judge"
++local _ = function(msg) -- vendor patch: not registered
+     local cmd = msg:lower()
+     local onText = MSC.L["ON"] or "ON"
+     local offText = MSC.L["OFF"] or "OFF"
