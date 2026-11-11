@@ -1,0 +1,11 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <!-- RestedXP Forever fork modules; load order matters (Init.lua last). -->
+    <Script file="ForeverBuilds\TalentResolver.lua"/>
+    <Script file="ForeverBuilds\BuildCatalog.lua"/>
+    <Script file="ForeverBuilds\TalentPath.lua"/>
+    <Script file="ForeverBuilds\TalentGuideUI.lua"/>
+    <Script file="ForeverBuilds\BuildState.lua"/>
+    <Script file="ForeverBuilds\Options.lua"/>
+    <Script file="ForeverBuilds\Diagnostics.lua"/>
+    <Script file="ForeverBuilds\Init.lua"/>
+</Ui>

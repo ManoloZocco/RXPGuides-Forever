@@ -1,0 +1,206 @@
+#!/usr/bin/env python3
+"""Regenerate SGJ/ (the embedded Sharpie's Gear Judge engine) from upstream.
+
+Usage (from the repo root):
+    python3 -I tools/vendor_sgj.py --ref <commit> [--src <checkout>]
+
+Without --src the script clones https://github.com/Supersharpie/SharpiesGearJudge
+into a temporary directory and checks out --ref.
+
+What it does, in order (all in a staging directory; SGJ/ is replaced only if
+every step succeeds):
+  1. copies the files listed in tools/sgj_files.txt (load order) plus LICENSE;
+  2. mechanical transforms on every .lua outside Libs/:
+       - top-level `local addonName, MSC = ...` / `local _, MSC = ...`
+         -> `... = "RXPGuides", RXP_SGJ_NS` (any other top-level `= ...` aborts)
+       - `_G[addonName] = MSC` is removed (it would overwrite _G.RXPGuides)
+       - SavedVariables renamed: SGJ_Settings -> RXP_SGJ_Settings,
+         SharpiesGearJudgeDB -> RXP_SGJ_DB
+       - asset paths Interface\\AddOns\\SharpiesGearJudge\\ -> Interface\\AddOns\\RXPGuides\\SGJ\\
+       - first line `if RXP_SGJ_DISABLED then return end`
+       - CRLF -> LF
+  3. applies tools/sgj_patches/*.patch (sorted) with `git apply`;
+  4. writes sgj.xml (load order), UPSTREAM (commit, version, source) and Version.lua.
+"""
+import argparse
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+
+UPSTREAM_URL = "https://github.com/Supersharpie/SharpiesGearJudge.git"
+GUARD = "if RXP_SGJ_DISABLED then return end\n"
+NAMESPACE = 'local {first}, MSC = "RXPGuides", RXP_SGJ_NS'
+
+VARARG_OK = re.compile(r"^local\s+(addonName|_)\s*,\s*MSC\s*=\s*\.\.\.\s*$")
+VARARG_ANY = re.compile(r"^local\s+[\w\s,]+=\s*\.\.\.")  # top level only (no indentation)
+GLOBAL_TABLE = re.compile(r"^_G\[addonName\]\s*=\s*MSC\s*$")
+RENAMES = [
+    (re.compile(r"\bSGJ_Settings\b"), "RXP_SGJ_Settings"),
+    (re.compile(r"\bSharpiesGearJudgeDB\b"), "RXP_SGJ_DB"),
+]
+# Asset paths of the standalone addon -> the embedded copy (same separator style).
+ASSET_PATH = re.compile(r"AddOns(\\\\|\\|/)SharpiesGearJudge(\\\\|\\|/)")
+
+
+class VendorError(Exception):
+    pass
+
+
+def repo_root():
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def read_file_list(path):
+    files = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            files.append(line.replace("\\", "/"))
+    return files
+
+
+def read_version(src):
+    toc = os.path.join(src, "SharpiesGearJudge_Forever.toc")
+    with open(toc, encoding="utf-8-sig") as f:
+        for line in f:
+            m = re.match(r"^##\s*Version:\s*(\S+)", line)
+            if m:
+                return m.group(1)
+    raise VendorError(f"no '## Version:' in {toc}")
+
+
+def transform_lua(text, relpath):
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    out = []
+    for lineno, line in enumerate(text.split("\n"), start=1):
+        m = VARARG_OK.match(line)
+        if m:
+            line = NAMESPACE.format(first=m.group(1))
+        elif VARARG_ANY.match(line):
+            raise VendorError(f"{relpath}:{lineno}: unsupported top-level vararg form: {line.strip()}")
+        elif GLOBAL_TABLE.match(line):
+            line = "-- vendor: removed _G[addonName] = MSC"
+        for pattern, repl in RENAMES:
+            line = pattern.sub(repl, line)
+        line = ASSET_PATH.sub(lambda m: "AddOns{0}RXPGuides{0}SGJ{1}".format(m.group(1), m.group(2)), line)
+        out.append(line)
+    return GUARD + "\n".join(out)
+
+
+def copy_tree(src, staging, files):
+    for rel in files:
+        source = os.path.join(src, rel)
+        if not os.path.isfile(source):
+            raise VendorError(f"listed file missing upstream: {rel}")
+        target = os.path.join(staging, rel)
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        if rel.endswith(".lua") and not rel.startswith("Libs/"):
+            with open(source, encoding="utf-8-sig", newline="") as f:
+                text = f.read()
+            with open(target, "w", encoding="utf-8", newline="\n") as f:
+                f.write(transform_lua(text, rel))
+        else:
+            shutil.copyfile(source, target)
+    shutil.copyfile(os.path.join(src, "LICENSE"), os.path.join(staging, "LICENSE"))
+
+
+def apply_patches(staging, patches_dir):
+    if not os.path.isdir(patches_dir):
+        return
+    for name in sorted(os.listdir(patches_dir)):
+        if not name.endswith(".patch"):
+            continue
+        patch = os.path.join(patches_dir, name)
+        result = subprocess.run(["git", "apply", "--whitespace=nowarn", patch],
+                                cwd=staging, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise VendorError(f"patch {name} does not apply:\n{result.stderr.strip()}")
+
+
+def write_xml(staging, files):
+    lines = ['<Ui xmlns="http://www.blizzard.com/wow/ui/">',
+             "    <!-- GENERATED by tools/vendor_sgj.py: do not edit -->",
+             '    <Script file="SGJ\\Version.lua"/>']
+    for rel in files:
+        if rel.endswith(".lua"):
+            lines.append('    <Script file="SGJ\\{}"/>'.format(rel.replace("/", "\\")))
+    lines.append("</Ui>")
+    with open(os.path.join(staging, "sgj.xml"), "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(lines) + "\n")
+
+
+def write_upstream(staging, ref, version, source):
+    with open(os.path.join(staging, "UPSTREAM"), "w", encoding="utf-8", newline="\n") as f:
+        f.write(f"source={source}\ncommit={ref}\nversion={version}\n")
+    # The embedded engine's own GetVersion() reads RXPGuides' metadata; this file keeps the real one.
+    with open(os.path.join(staging, "Version.lua"), "w", encoding="utf-8", newline="\n") as f:
+        f.write("-- GENERATED by tools/vendor_sgj.py: embedded Sharpie's Gear Judge version\n"
+                f'RXP_SGJ_VERSION = "{version}"\nRXP_SGJ_COMMIT = "{ref}"\n')
+
+
+def clone(ref, workdir):
+    target = os.path.join(workdir, "sgj-src")
+    for cmd in (["git", "init", "-q", target],
+                ["git", "-C", target, "fetch", "-q", "--depth", "1", UPSTREAM_URL, ref],
+                ["git", "-C", target, "checkout", "-q", "FETCH_HEAD"]):
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise VendorError(f"{' '.join(cmd)} failed:\n{result.stderr.strip()}")
+    sha = subprocess.run(["git", "-C", target, "rev-parse", "HEAD"],
+                         capture_output=True, text=True, check=True).stdout.strip()
+    return target, sha
+
+
+def replace_dest(staging, dest):
+    parent = os.path.dirname(os.path.abspath(dest))
+    os.makedirs(parent, exist_ok=True)
+    old = None
+    if os.path.exists(dest):
+        old = dest + ".old-vendor"
+        if os.path.exists(old):
+            shutil.rmtree(old)
+        os.rename(dest, old)
+    shutil.move(staging, dest)
+    if old:
+        shutil.rmtree(old)
+
+
+def main(argv=None):
+    root = repo_root()
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--ref", required=True, help="upstream commit to vendor")
+    parser.add_argument("--src", help="existing checkout of SharpiesGearJudge (skips cloning)")
+    parser.add_argument("--dest", default=os.path.join(root, "SGJ"))
+    parser.add_argument("--files", default=os.path.join(root, "tools", "sgj_files.txt"))
+    parser.add_argument("--patches", default=os.path.join(root, "tools", "sgj_patches"))
+    args = parser.parse_args(argv)
+
+    with tempfile.TemporaryDirectory() as work:
+        try:
+            if args.src:
+                src, ref = args.src, args.ref
+            else:
+                src, ref = clone(args.ref, work)
+            files = read_file_list(args.files)
+            version = read_version(src)
+            staging = os.path.join(work, "staging")
+            os.makedirs(staging)
+            copy_tree(src, staging, files)
+            apply_patches(staging, args.patches)
+            write_xml(staging, files)
+            write_upstream(staging, ref, version, UPSTREAM_URL)
+            replace_dest(staging, args.dest)
+        except VendorError as e:
+            print(f"vendor_sgj: {e}", file=sys.stderr)
+            return 1
+    print(f"vendor_sgj: wrote {args.dest} ({len(files)} files, {version}, {ref})")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -3573,6 +3573,7 @@ function addon.settings:CreateAceOptionsPanel()
         table.insert(addon.settings.routingOptions, entry)
     end
 
+    if RXP_FB and RXP_FB.Options then RXP_FB.Options.Inject(optionsTable) end -- FORK: Forever Build options
     AceConfig:RegisterOptionsTable(addon.title, optionsTable)
 
     optionsTable.args.profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(

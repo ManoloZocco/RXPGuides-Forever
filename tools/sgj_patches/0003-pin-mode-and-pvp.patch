@@ -1,0 +1,18 @@
+--- a/Helpers.lua
++++ b/Helpers.lua
+@@ -1556,6 +1556,7 @@
+ 
+ -- Per spec (MSC.GetSpecSetting): group defaults to the spec being scored.
+ function MSC.IsGearingForPvP(group)
++    do return false end -- vendor patch: PvP only via the build (MSC.IsPvPTalentBuild)
+     return MSC.IsForever and RXP_SGJ_Settings and MSC.GetSpecSetting("GearForPvP", group) == true or false
+ end
+ 
+@@ -1735,6 +1736,7 @@
+ -- account-wide choice is only used if it is a profile of this character's
+ -- class (it used to follow you onto every character).
+ function MSC.GetManualSpec(group)
++    do return "AUTO" end -- vendor patch: the build chosen in RestedXP decides (MSC.TalentBuildRole)
+     local mine = SpecSettingsFor(false)
+     local g = mine and mine[group or MSC.GetScoringSpecGroup()]
+     if g and g.Mode ~= nil then return g.Mode end

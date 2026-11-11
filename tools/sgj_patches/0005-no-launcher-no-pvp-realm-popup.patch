@@ -1,0 +1,24 @@
+--- a/Interface.lua
++++ b/Interface.lua
+@@ -3766,7 +3766,7 @@
+ local dbIcon = LibStub and LibStub:GetLibrary("LibDBIcon-1.0", true)
+ local MINIMAP_ICON_NAME = "SharpiesGearJudge"
+ 
+-local ldbObject = ldb and ldb:NewDataObject(MINIMAP_ICON_NAME, {
++local ldbObject = false and ldb and ldb:NewDataObject(MINIMAP_ICON_NAME, { -- vendor patch: no LDB launcher (it opens the SGJ window)
+     type = "launcher",
+     text = "Gear Judge",
+     icon = "Interface\\Icons\\INV_Misc_Spyglass_02",
+--- a/Judge.lua
++++ b/Judge.lua
+@@ -269,8 +269,8 @@
+ }
+ 
+ local pvpRealmCheck = CreateFrame("Frame")
+-pvpRealmCheck:RegisterEvent("PLAYER_ENTERING_WORLD")
+-pvpRealmCheck:RegisterEvent("ZONE_CHANGED_NEW_AREA")
++-- vendor patch (no PvP realm popup; PvP comes from the build): pvpRealmCheck:RegisterEvent("PLAYER_ENTERING_WORLD")
++-- vendor patch (no PvP realm popup; PvP comes from the build): pvpRealmCheck:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+ pvpRealmCheck:SetScript("OnEvent", function(self)
+     if not MSC.IsForever or not RXP_SGJ_Settings then return end
+     local realm = GetRealmName and GetRealmName() or "?"

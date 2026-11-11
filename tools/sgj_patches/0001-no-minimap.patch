@@ -1,0 +1,19 @@
+--- a/Interface.lua
++++ b/Interface.lua
+@@ -3811,6 +3811,7 @@
+ end
+ 
+ local function RegisterMinimapIcon()
++    do return end -- vendor patch: no minimap button; settings live in RestedXP
+     if not (dbIcon and ldbObject) or dbIcon:IsRegistered(MINIMAP_ICON_NAME) then return end
+     if not RXP_SGJ_Settings then RXP_SGJ_Settings = {} end
+     if type(RXP_SGJ_Settings.MinimapIcon) ~= "table" then
+@@ -4112,7 +4113,7 @@
+         GemMode = 1,           -- Skeptic
+         GemQuality = 3,        -- NEW: Rare (Blue) Default
+         Mode = "AUTO",         -- Auto-Detect
+-        HideMinimap = false,
++        HideMinimap = true, -- vendor patch: no minimap button
+         HideTooltips = false,
+         MuteSounds = false,
+         CompactEquip = false,

@@ -19,7 +19,8 @@
 ## Category-zhCN: 任务
 ## Category-zhTW: 任務
 ## OptionalDeps: Questie, RXPGuides_Themes
-## SavedVariables: RXPData, RXPDB, RXPSettings, RXPString
+# FORK: RXP_SGJ_Settings and RXP_SGJ_DB hold the embedded Sharpie's Gear Judge engine settings
+## SavedVariables: RXPData, RXPDB, RXPSettings, RXPString, RXP_SGJ_Settings, RXP_SGJ_DB
 ## SavedVariablesPerCharacter: RXPCData, RXPCTrackingData, RXPCComms, RXPCSettings
 ## X-Curse-Project-ID: 486246
 ## X-Wago-ID: ZKbebq61
@@ -115,5 +116,9 @@ Guides/Talents/tbc.xml [AllowLoadGameType tbc]
 Guides/Talents/classic.xml [AllowLoadGameType vanilla,camelot]
 
 ItemUpgrades.lua [AllowLoadGameType tbc,vanilla,camelot,cata]
+# FORK: WoW Forever only: bootstrap, embedded Sharpie's Gear Judge engine, Forever Build modules
+ForeverBuilds\Bootstrap.lua [AllowLoadGameType camelot]
+SGJ\sgj.xml [AllowLoadGameType camelot]
+ForeverBuilds\ForeverBuilds.xml [AllowLoadGameType camelot]
 
 CptStadicsVendorTreasures.lua [AllowLoadGameType vanilla,camelot,tbc,wrath]
