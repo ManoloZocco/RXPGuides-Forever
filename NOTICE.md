@@ -1,6 +1,6 @@
 # NOTICE
 
-This repository is a **private, personal, non-commercial fork** of RestedXP Guides,
+This repository is a **personal, non-commercial fork** of RestedXP Guides,
 adapted for World of Warcraft: Forever. It is not affiliated with RestedXP or Supersharpie.
 
 ## RestedXP Guides (base of this repository)

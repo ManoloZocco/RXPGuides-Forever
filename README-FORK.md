@@ -1,6 +1,6 @@
 # RestedXP – WoW Forever personal edition
 
-A private, personal fork of [RestedXP Guides](https://github.com/RestedXP/RXPGuides) for **World of Warcraft: Forever**,
+A personal, non-commercial fork of [RestedXP Guides](https://github.com/RestedXP/RXPGuides) for **World of Warcraft: Forever**,
 with the gear engine of [Sharpie's Gear Judge](https://github.com/Supersharpie/SharpiesGearJudge) built in.
 See `NOTICE.md` for licenses and attributions.
 
@@ -19,6 +19,14 @@ See `NOTICE.md` for licenses and attributions.
 - Builds with an incomplete talent order are marked "(incomplete: N/51)": their levels may not match.
 
 Do **not** enable the standalone *Sharpie's Gear Judge* addon at the same time: the built-in engine turns itself off and says so in chat.
+
+## Install
+
+1. Download `RXPGuides-<version>.zip` from the [Releases](../../releases) page.
+2. Close the game. In `World of Warcraft/_forever_/Interface/AddOns/`, move the existing `RXPGuides` folder somewhere else as a backup.
+3. Extract the zip there: you get a new `RXPGuides` folder. RestedXP settings and guide progress are kept.
+4. If an addon manager (CurseForge app, WowUp…) handles RestedXP, turn off its updates for RestedXP, or it will overwrite this version.
+5. In game: `/rxp` opens the settings, tab **Forever Build**.
 
 ## Commands
 
