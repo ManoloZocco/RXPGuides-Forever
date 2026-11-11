@@ -76,6 +76,15 @@ function UI.Lines()
     return lines
 end
 
+-- The first available step that is on the tree: an unmatched talent can never be marked
+-- taken, so it must not block the hint and the highlight for the rest of leveling.
+local function NextResolved()
+    for _, step in ipairs(state.available) do
+        if step.resolved then return step end
+    end
+    return nil
+end
+
 -- ---------------------------------------------------------------- highlight
 local glowOn = nil
 
@@ -85,7 +94,7 @@ local function HideGlow()
 end
 
 function UI.HighlightTarget()
-    local step = state.available[1]
+    local step = NextResolved()
     local _, tree = TalentWindow()
     if not (step and step.nodeID and tree and tree.GetTalentButtonByNodeID) then return nil end
     local ok, button = pcall(tree.GetTalentButtonByNodeID, tree, step.nodeID)
@@ -202,7 +211,7 @@ function UI.Update(build, steps, warnings, reason, currentRank, level)
     local hint = (reason == "levelup") or (loginHintPending and currentRank ~= nil)
     if hint and currentRank then
         loginHintPending = false
-        local step = state.available[1]
+        local step = NextResolved()
         if step then
             print(PREFIX .. "level " .. PlayerLevel() .. " talent: "
                 .. RXP_FB.TalentPath.FormatStep(step, PlayerClass()))

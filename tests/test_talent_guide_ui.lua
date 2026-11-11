@@ -168,4 +168,16 @@ function T.test_panel_onshow_reapplies_build()
     assert_eq(applied, 1, "opening the talent window recomputes (the tree may have loaded since login)")
 end
 
+function T.test_hint_and_highlight_skip_unresolved_steps()
+    local UI, ctx = setup({ level = 11, talentFrame = true })
+    UI.Attach()
+    local b = { id = "x", label = "X", order = { 99999, 1, 16934, 1 }, points = 2, complete = true, class = "DRUID" }
+    local steps, warnings = RXP_FB.TalentPath.Build(b, function(id) return INDEX[id] end)
+    UI.Update(b, steps, warnings, "levelup", function() return 0 end)
+    assert_eq(ctx.printed, { "RestedXP Forever: level 11 talent: Lv 11: Ferocity (1/5) – Feral Combat" })
+    assert_eq(PlayerSpellsFrame.TalentsFrame.asked[#PlayerSpellsFrame.TalentsFrame.asked], 101)
+    local lines = UI.Lines()
+    assert_eq(lines[3], "  Lv 10: spell 99999 (1) [not found]", "unresolved step still listed")
+end
+
 return T

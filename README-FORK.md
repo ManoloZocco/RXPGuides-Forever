@@ -37,6 +37,8 @@ Do **not** enable the standalone *Sharpie's Gear Judge* addon at the same time: 
 6. With the talent window open, the panel lists the right talents for your level and build, and the next node is highlighted (if `/rxpfb check` says `highlight: available`). Each level-up prints the next talent in chat.
 7. No Sharpie's minimap button or window.
 8. With the standalone Sharpie's Gear Judge enabled, a clear chat warning appears.
+9. The talent panel is fully on screen next to the talent window (not cut off at the right edge).
+10. Learning talents with the highlight active gives no "action blocked" / "interface action failed" message. If it does, report it: the highlight can be switched off without losing the panel.
 
 ## Updating
 
