@@ -154,7 +154,11 @@ local function AttachTo(window)
     panel:ClearAllPoints()
     panel:SetPoint("TOPLEFT", window, "TOPRIGHT", 4, 0)
     UI.panelAttached = true
-    window:HookScript("OnShow", function() panel:Show(); Redraw() end)
+    window:HookScript("OnShow", function()
+        panel:Show()
+        -- recompute: the talent tree may have become readable since the last update
+        if RXP_FB.BuildState and RXP_FB.BuildState.Apply then RXP_FB.BuildState.Apply() else Redraw() end
+    end)
     window:HookScript("OnHide", function() panel:Hide(); HideGlow() end)
     if window.IsShown and window:IsShown() then panel:Show() else panel:Hide() end
     Redraw()

@@ -159,4 +159,13 @@ function T.test_levelup_uses_event_level()
     assert_eq(UI.Lines()[4], "  Lv 14: Ferocity (5/5) – Feral Combat", "level 14 step is available now")
 end
 
+function T.test_panel_onshow_reapplies_build()
+    local UI = setup({ talentFrame = true })
+    local applied = 0
+    RXP_FB.BuildState = { Apply = function() applied = applied + 1 end }
+    UI.Attach()
+    PlayerSpellsFrame.scripts.OnShow(PlayerSpellsFrame)
+    assert_eq(applied, 1, "opening the talent window recomputes (the tree may have loaded since login)")
+end
+
 return T

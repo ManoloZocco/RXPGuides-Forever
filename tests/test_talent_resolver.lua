@@ -63,4 +63,9 @@ function T.test_tree_names_all_classes()
     assert_eq(R.TreeName("NOPE", 1), "Tree 1")
 end
 
+function T.test_empty_tree_is_unreadable()
+    local R = load()
+    assert_eq(R.BuildIndex(function() return true end), nil, "a config with no nodes is not loaded yet")
+end
+
 return T

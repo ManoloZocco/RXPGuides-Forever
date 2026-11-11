@@ -111,9 +111,11 @@ function S.Apply(reason, level)
 end
 
 local EVENTS = {
-    "PLAYER_LOGIN", "ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_LEVEL_UP",
-    "PLAYER_TALENT_UPDATE", "CHARACTER_POINTS_CHANGED", "TRAIT_CONFIG_UPDATED",
+    "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_LEVEL_UP",
+    "PLAYER_TALENT_UPDATE", "CHARACTER_POINTS_CHANGED", "TRAIT_CONFIG_UPDATED", "TRAIT_CONFIG_LIST_UPDATED",
 }
+-- events after which the trait tree may have become readable: rebuild labels with tree names
+local TREE_EVENTS = { PLAYER_LOGIN = true, PLAYER_ENTERING_WORLD = true, TRAIT_CONFIG_UPDATED = true, TRAIT_CONFIG_LIST_UPDATED = true }
 
 function S.Init()
     if RXP_SGJ_DISABLED then return end
@@ -124,7 +126,7 @@ function S.Init()
     local f = CreateFrame("Frame")
     for _, event in ipairs(EVENTS) do pcall(f.RegisterEvent, f, event) end
     f:SetScript("OnEvent", function(_, event, arg1)
-        if event == "PLAYER_LOGIN" or event == "TRAIT_CONFIG_UPDATED" then cache.withTrees = false end
+        if TREE_EVENTS[event] then cache.withTrees = false end
         if event == "PLAYER_LEVEL_UP" then
             -- the new level comes with the event; UnitLevel can still report the old one here
             S.Apply("levelup", tonumber(arg1))

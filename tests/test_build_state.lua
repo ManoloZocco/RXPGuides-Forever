@@ -16,7 +16,7 @@ local function setup(opts)
     engine.roleCalls = {}
     engine.SetTalentBuildRole = function(l, e, p) engine.roleCalls[#engine.roleCalls + 1] = { l, e, p } end
     engine.GetActiveSpecGroup = function() return opts.group or 1 end
-    engine.ForEachTraitTalent = function(fn) return true end
+    engine.ForEachTraitTalent = function(fn) fn("Ferocity", 0, 2, { ID = 101, maxRanks = 5 }, 16934); return true end
     RXPCData = opts.saved and { foreverBuilds = opts.saved } or {}
     for _, f in ipairs({ "TalentResolver", "BuildCatalog", "TalentPath", "BuildState" }) do
         Stubs.loadAddonFile("ForeverBuilds/" .. f .. ".lua", {})
@@ -134,6 +134,14 @@ function T.test_levelup_passes_event_level()
     S.Init()
     ctx.fire("PLAYER_LEVEL_UP", 21)
     assert_eq(ui.calls[#ui.calls].level, 21, "new level from the event, UnitLevel may still be 20")
+end
+
+function T.test_init_registers_late_talent_events()
+    local S, _, _, ctx = setup()
+    S.Init()
+    local f = ctx.frames[#ctx.frames]
+    assert(f.events.PLAYER_ENTERING_WORLD, "PLAYER_ENTERING_WORLD")
+    assert(f.events.TRAIT_CONFIG_LIST_UPDATED, "TRAIT_CONFIG_LIST_UPDATED")
 end
 
 return T

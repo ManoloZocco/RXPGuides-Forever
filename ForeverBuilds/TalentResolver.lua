@@ -39,7 +39,9 @@ end
 function R.BuildIndex(forEach)
     if type(forEach) ~= "function" then return nil end
     local index = { bySpell = {}, byName = {} }
+    local count = 0
     local ok = forEach(function(name, rank, tab, node, spellID)
+        count = count + 1
         local entry = {
             name = name,
             tab = tab,
@@ -50,7 +52,8 @@ function R.BuildIndex(forEach)
         if spellID then index.bySpell[spellID] = entry end
         if name then index.byName[name:lower()] = entry end
     end)
-    if ok == false then return nil end
+    -- no config, or a config with no nodes yet (talent data still loading): not readable
+    if ok == false or count == 0 then return nil end
     return index
 end
 
