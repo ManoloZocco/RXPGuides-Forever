@@ -84,7 +84,7 @@ function S.RoleFor(group)
     return { leveling = b.role, endgame = b.endgame, pvp = b.pvp or nil }
 end
 
-function S.Apply(reason)
+function S.Apply(reason, level)
     local engine = Engine()
     local group = ActiveGroup()
     local build = BuildFor(group)
@@ -107,7 +107,7 @@ function S.Apply(reason)
         end or nil
     end
     local UI = RXP_FB.TalentGuideUI
-    if UI and UI.Update then UI.Update(build, steps, warnings or {}, reason, currentRank) end
+    if UI and UI.Update then UI.Update(build, steps, warnings or {}, reason, currentRank, level) end
 end
 
 local EVENTS = {
@@ -123,8 +123,13 @@ function S.Init()
     end
     local f = CreateFrame("Frame")
     for _, event in ipairs(EVENTS) do pcall(f.RegisterEvent, f, event) end
-    f:SetScript("OnEvent", function(_, event)
+    f:SetScript("OnEvent", function(_, event, arg1)
         if event == "PLAYER_LOGIN" or event == "TRAIT_CONFIG_UPDATED" then cache.withTrees = false end
-        S.Apply(event == "PLAYER_LEVEL_UP" and "levelup" or (event == "PLAYER_LOGIN" and "login" or nil))
+        if event == "PLAYER_LEVEL_UP" then
+            -- the new level comes with the event; UnitLevel can still report the old one here
+            S.Apply("levelup", tonumber(arg1))
+        else
+            S.Apply(event == "PLAYER_LOGIN" and "login" or nil)
+        end
     end)
 end

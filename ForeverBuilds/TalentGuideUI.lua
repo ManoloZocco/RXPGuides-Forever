@@ -10,7 +10,7 @@ local PREFIX = "RestedXP Forever: "
 local MAX_NOW_LINES = 5
 local TALENT_UI_ADDONS = { Blizzard_PlayerSpells = true, Blizzard_ClassTalentUI = true }
 
-local state = { build = nil, steps = nil, warnings = {}, currentRank = nil, available = {}, upcoming = {} }
+local state = { build = nil, steps = nil, warnings = {}, currentRank = nil, available = {}, upcoming = {}, level = nil }
 local loginHintPending = false
 
 local function PlayerClass()
@@ -25,10 +25,15 @@ local function TalentWindow()
     return nil, nil
 end
 
+-- PLAYER_LEVEL_UP passes the new level, which UnitLevel may not report yet.
+local function PlayerLevel()
+    return math.max(UnitLevel("player") or 1, state.level or 0)
+end
+
 local function Recompute()
     state.available, state.upcoming = {}, {}
     if state.build and state.steps and state.currentRank then
-        state.available, state.upcoming = RXP_FB.TalentPath.Pending(state.steps, UnitLevel("player") or 1, state.currentRank)
+        state.available, state.upcoming = RXP_FB.TalentPath.Pending(state.steps, PlayerLevel(), state.currentRank)
     end
 end
 
@@ -185,8 +190,9 @@ function UI.Toggle()
 end
 
 -- ---------------------------------------------------------------- update
-function UI.Update(build, steps, warnings, reason, currentRank)
+function UI.Update(build, steps, warnings, reason, currentRank, level)
     state.build, state.steps, state.warnings, state.currentRank = build, steps, warnings or {}, currentRank
+    if level then state.level = level end
     Recompute()
     if reason == "login" then loginHintPending = true end
     local hint = (reason == "levelup") or (loginHintPending and currentRank ~= nil)
@@ -194,7 +200,7 @@ function UI.Update(build, steps, warnings, reason, currentRank)
         loginHintPending = false
         local step = state.available[1]
         if step then
-            print(PREFIX .. "level " .. (UnitLevel("player") or "?") .. " talent: "
+            print(PREFIX .. "level " .. PlayerLevel() .. " talent: "
                 .. RXP_FB.TalentPath.FormatStep(step, PlayerClass()))
         end
     end

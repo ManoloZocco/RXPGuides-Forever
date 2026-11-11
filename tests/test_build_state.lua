@@ -22,8 +22,8 @@ local function setup(opts)
         Stubs.loadAddonFile("ForeverBuilds/" .. f .. ".lua", {})
     end
     local ui = { calls = {} }
-    ui.Update = function(build, steps, warnings, reason, currentRank)
-        ui.calls[#ui.calls + 1] = { build = build, steps = steps, warnings = warnings, reason = reason, currentRank = currentRank }
+    ui.Update = function(build, steps, warnings, reason, currentRank, level)
+        ui.calls[#ui.calls + 1] = { build = build, steps = steps, warnings = warnings, reason = reason, currentRank = currentRank, level = level }
     end
     RXP_FB.TalentGuideUI = ui
     return RXP_FB.BuildState, engine, ui, ctx
@@ -127,6 +127,13 @@ function T.test_set_refreshes_engine_scoring()
     assert_eq(refreshed, 1)
     S.Set(1, CAT)
     assert_eq(refreshed, 2)
+end
+
+function T.test_levelup_passes_event_level()
+    local S, _, ui, ctx = setup({ level = 20 })
+    S.Init()
+    ctx.fire("PLAYER_LEVEL_UP", 21)
+    assert_eq(ui.calls[#ui.calls].level, 21, "new level from the event, UnitLevel may still be 20")
 end
 
 return T

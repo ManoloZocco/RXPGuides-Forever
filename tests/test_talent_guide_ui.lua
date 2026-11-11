@@ -151,4 +151,12 @@ function T.test_attach_waits_for_talent_ui_addon()
     assert(UI.panel, "panel created after the talent UI loads")
 end
 
+function T.test_levelup_uses_event_level()
+    local UI, ctx = setup({ level = 13 }) -- UnitLevel still reports the old level
+    local b, steps, warnings = cat(51)
+    UI.Update(b, steps, warnings, "levelup", currentRank, 14)
+    assert_eq(ctx.printed, { "RestedXP Forever: level 14 talent: Lv 13: Ferocity (4/5) – Feral Combat" })
+    assert_eq(UI.Lines()[4], "  Lv 14: Ferocity (5/5) – Feral Combat", "level 14 step is available now")
+end
+
 return T
