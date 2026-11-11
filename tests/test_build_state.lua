@@ -119,4 +119,14 @@ function T.test_no_current_rank_without_trait_data()
     assert_eq(#call.steps, 51)
 end
 
+function T.test_set_refreshes_engine_scoring()
+    local S, engine = setup()
+    local refreshed = 0
+    engine.OnScoringSettingsChanged = function() refreshed = refreshed + 1 end
+    S.Set(2, BEAR) -- other spec: the active role does not change, the other-spec tooltip line must still refresh
+    assert_eq(refreshed, 1)
+    S.Set(1, CAT)
+    assert_eq(refreshed, 2)
+end
+
 return T

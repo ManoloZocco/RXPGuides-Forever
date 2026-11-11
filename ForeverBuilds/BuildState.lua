@@ -66,6 +66,10 @@ function S.Set(group, id)
     local saved = Saved()
     if saved then saved[group] = (id ~= AUTO) and id or nil end
     S.Apply()
+    -- Same refresh as Sharpie's own profile picker: cached scores, bag arrows and the
+    -- other-spec tooltip line (SetTalentBuildRole alone only clears the active weights).
+    local engine = Engine()
+    if engine and engine.OnScoringSettingsChanged then engine.OnScoringSettingsChanged() end
 end
 
 local function BuildFor(group)
