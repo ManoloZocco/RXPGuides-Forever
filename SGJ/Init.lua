@@ -269,7 +269,7 @@ function MSC:ForceInit()
                 end
             end
             
-            print(string.format(MSC.L["|cff00ff00Sharpie's Gear Judge:|r Loaded %s"], className))
+            -- vendor patch (quiet login): print(string.format(MSC.L["|cff00ff00Sharpie's Gear Judge:|r Loaded %s"], className))
             break 
         end
     end

@@ -3766,7 +3766,7 @@ local ldb = LibStub and LibStub:GetLibrary("LibDataBroker-1.1", true)
 local dbIcon = LibStub and LibStub:GetLibrary("LibDBIcon-1.0", true)
 local MINIMAP_ICON_NAME = "SharpiesGearJudge"
 
-local ldbObject = ldb and ldb:NewDataObject(MINIMAP_ICON_NAME, {
+local ldbObject = false and ldb and ldb:NewDataObject(MINIMAP_ICON_NAME, { -- vendor patch: no LDB launcher (it opens the SGJ window)
     type = "launcher",
     text = "Gear Judge",
     icon = "Interface\\Icons\\INV_Misc_Spyglass_02",

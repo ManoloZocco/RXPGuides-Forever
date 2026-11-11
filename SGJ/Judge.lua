@@ -67,7 +67,7 @@ EventFrame:SetScript("OnEvent", function(self, event, arg1)
         MSC.ManualSpec = MSC.GetManualSpec(MSC.GetActiveSpecGroup())
         
         local version = MSC.IsForever and MSC.L["Forever Edition"] or (MSC.IsEra and MSC.L["Classic Era"] or MSC.L["TBC Edition"])
-        print(string.format(MSC.L["|cff00ff00Sharpie's Gear Judge|r (%s) Loaded. Type /sgj for menu."], version))
+        -- vendor patch (quiet login, no /sgj inside RestedXP): print(string.format(MSC.L["|cff00ff00Sharpie's Gear Judge|r (%s) Loaded. Type /sgj for menu."], version))
         
     elseif event == "PLAYER_LOGIN" then
         -- [[ FORCE INIT ON LOGIN ]]
@@ -269,8 +269,8 @@ StaticPopupDialogs["SGJ_PVP_REALM"] = {
 }
 
 local pvpRealmCheck = CreateFrame("Frame")
-pvpRealmCheck:RegisterEvent("PLAYER_ENTERING_WORLD")
-pvpRealmCheck:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+-- vendor patch (no PvP realm popup; PvP comes from the build): pvpRealmCheck:RegisterEvent("PLAYER_ENTERING_WORLD")
+-- vendor patch (no PvP realm popup; PvP comes from the build): pvpRealmCheck:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 pvpRealmCheck:SetScript("OnEvent", function(self)
     if not MSC.IsForever or not RXP_SGJ_Settings then return end
     local realm = GetRealmName and GetRealmName() or "?"

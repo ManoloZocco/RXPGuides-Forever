@@ -28,8 +28,16 @@ local function scripts(xml)
     return list
 end
 
-function T.test_engine_and_fork_load_without_errors()
+local function boot(extra)
     local ctx = Stubs.install({ class = "DRUID", level = 20, addonEnableState = 0 })
+    ctx.popups = {}
+    _G.StaticPopup_Show = function(name) ctx.popups[#ctx.popups + 1] = name end
+    if extra then extra(ctx) end
+    return ctx
+end
+
+function T.test_engine_and_fork_load_without_errors()
+    local ctx = T._ctx or boot()
     _G.GetBuildInfo = function() return "1.60.1", "70862", "Nov 1 2026", 16001 end
     _G.GetLocale = function() return "enUS" end
     _G.C_AddOns.GetAddOnMetadata = function() return "" end
@@ -84,6 +92,37 @@ function T.test_engine_and_fork_load_without_errors()
     end
     assert(#eventErrors == 0, "event errors:\n" .. table.concat(eventErrors, "\n"))
     assert_eq(RXP_SGJ_NS.CurrentClass and RXP_SGJ_NS.CurrentClass.Name, "DRUID", "engine class module loaded")
+end
+
+-- Host-specific SGJ UI must stay quiet inside RestedXP: no "disable RestedXP gear" popup,
+-- no PvP-realm popup, no LDB launcher (Titan/Bazooka button opening the SGJ window),
+-- no "Type /sgj" login lines.
+function T.test_no_sgj_ui_inside_restedxp()
+    T._ctx = boot(function(ctx)
+        _G.RXPSettings = { profileKeys = { ["Tester - Realm"] = "Default" }, profiles = { Default = { enableItemUpgrades = true } } }
+        _G.UnitIsPVP = function() return true end
+        _G.GetZonePVPInfo = function() return "contested" end
+    end)
+    local ctx = T._ctx
+    T.test_engine_and_fork_load_without_errors()
+    T._ctx = nil
+    _G.C_Timer.After = function(_, fn) fn() end
+    _G.C_AddOns.IsAddOnLoaded = function(name) return name == "RXPGuides" end
+    for _, f in ipairs(ctx.frames) do
+        if f.events.PLAYER_ENTERING_WORLD and f.scripts.OnEvent then
+            pcall(f.scripts.OnEvent, f, "PLAYER_ENTERING_WORLD")
+        end
+    end
+    for _, name in ipairs(ctx.popups) do
+        assert(name ~= "SGJ_DISABLE_RXP_GEAR", "RestedXP conflict popup shown inside RestedXP")
+        assert(name ~= "SGJ_PVP_REALM", "PvP realm popup shown")
+    end
+    local ldb = LibStub("LibDataBroker-1.1")
+    assert_eq(ldb:GetDataObjectByName("SharpiesGearJudge"), nil, "no SGJ LDB launcher")
+    for _, line in ipairs(ctx.printed or {}) do
+        assert(not line:find("Type /sgj", 1, true), "login line mentions /sgj: " .. line)
+        assert(not line:find("Sharpie's Gear Judge:|r Loaded", 1, true), "class loaded line: " .. line)
+    end
 end
 
 return T

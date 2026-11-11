@@ -1,0 +1,11 @@
+--- a/ConflictManager.lua
++++ b/ConflictManager.lua
+@@ -47,7 +47,7 @@
+ local function CheckForConflicts()
+     if RXP_SGJ_Settings and RXP_SGJ_Settings.DisableConflictCheck then return end
+ 
+-    if C_AddOns.IsAddOnLoaded("RestedXP") or C_AddOns.IsAddOnLoaded("RXPGuides") then
++    if false then -- vendor patch: embedded in RestedXP, whose Item Upgrades is off on Forever
+         if RXPSettings and RXPSettings.profileKeys then
+             local myKey = UnitName("player") .. " - " .. GetRealmName()
+             local profileName = RXPSettings.profileKeys[myKey]
