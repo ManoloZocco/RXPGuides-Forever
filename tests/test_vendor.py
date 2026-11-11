@@ -169,5 +169,38 @@ class VendorTest(unittest.TestCase):
         self.assertLess(xml.index('SGJ\\Version.lua'), xml.index('SGJ\\Libs\\LibStub\\LibStub.lua'))
 
 
+    def test_textures_copied_and_asset_paths_rewritten(self):
+        os.makedirs(os.path.join(self.src, "Textures"), exist_ok=True)
+        with open(os.path.join(self.src, "Textures", "Upgrade.png"), "wb") as f:
+            f.write(b"\x89PNG fake")
+        write(os.path.join(self.src, "Helpers.lua"),
+              'local _, MSC = ...\n'
+              'local A = "Interface\\\\AddOns\\\\SharpiesGearJudge\\\\Textures\\\\Upgrade.png"\n'
+              'local B = "Interface/AddOns/SharpiesGearJudge/Textures/"\n')
+        with open(self.files, "a", encoding="utf-8") as f:
+            f.write("Textures\\Upgrade.png\n")
+        self.assert_ok(self.run_vendor())
+        with open(os.path.join(self.dest, "Textures", "Upgrade.png"), "rb") as f:
+            self.assertEqual(f.read(), b"\x89PNG fake")
+        helpers = read(os.path.join(self.dest, "Helpers.lua"))
+        self.assertIn('"Interface\\\\AddOns\\\\RXPGuides\\\\SGJ\\\\Textures\\\\Upgrade.png"', helpers)
+        self.assertIn('"Interface/AddOns/RXPGuides/SGJ/Textures/"', helpers)
+        self.assertNotIn("SharpiesGearJudge", helpers)
+        self.assertNotIn("Textures", read(os.path.join(self.dest, "sgj.xml")))
+
+    def test_real_file_list_ships_every_texture(self):
+        listed = set(read(os.path.join(REPO, "tools", "sgj_files.txt")).replace("\\", "/").split("\n"))
+        for name in ("Upgrade.png", "Downgrade.png", "Ring_BG.tga", "Ring_Fill.tga", "Ring_Rune.tga",
+                     "Ring_Sun.tga", "Ring_Swirl.tga", "Druid.tga", "Warrior.tga"):
+            self.assertIn("Textures/" + name, listed)
+
+    def test_committed_engine_has_no_standalone_asset_paths(self):
+        for dirpath, _, names in os.walk(os.path.join(REPO, "SGJ")):
+            for name in names:
+                if name.endswith(".lua"):
+                    text = read(os.path.join(dirpath, name))
+                    self.assertNotRegex(text, r"AddOns[\\/]+SharpiesGearJudge", os.path.join(dirpath, name))
+
+
 if __name__ == "__main__":
     unittest.main()

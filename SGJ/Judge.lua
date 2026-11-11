@@ -552,8 +552,8 @@ MSC.LastLink = nil      -- Stores the last item we saw
 local Scratch_Tooltip_New = {}
 local Scratch_Tooltip_Old = {}
 local Scratch_Tooltip_Diffs = {}
-local TEX_UP = "|TInterface\\AddOns\\SharpiesGearJudge\\Textures\\Upgrade.png:14:14:0:-2|t"
-local TEX_DOWN = "|TInterface\\AddOns\\SharpiesGearJudge\\Textures\\Downgrade.png:14:14:0:-2|t"
+local TEX_UP = "|TInterface\\AddOns\\RXPGuides\\SGJ\\Textures\\Upgrade.png:14:14:0:-2|t"
+local TEX_DOWN = "|TInterface\\AddOns\\RXPGuides\\SGJ\\Textures\\Downgrade.png:14:14:0:-2|t"
 -- Judge's Note colours (read-only)
 local NOTE_CL_DEFAULT, NOTE_CR_DEFAULT = {r=0.85, g=0.6, b=1.0}, {r=0.64, g=0.21, b=0.93}
 local NOTE_CL_PVP, NOTE_CR_PVP = {r=1.0, g=0.6, b=0.6}, {r=1.0, g=0.2, b=0.2}

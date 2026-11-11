@@ -16,6 +16,7 @@ every step succeeds):
        - `_G[addonName] = MSC` is removed (it would overwrite _G.RXPGuides)
        - SavedVariables renamed: SGJ_Settings -> RXP_SGJ_Settings,
          SharpiesGearJudgeDB -> RXP_SGJ_DB
+       - asset paths Interface\\AddOns\\SharpiesGearJudge\\ -> Interface\\AddOns\\RXPGuides\\SGJ\\
        - first line `if RXP_SGJ_DISABLED then return end`
        - CRLF -> LF
   3. applies tools/sgj_patches/*.patch (sorted) with `git apply`;
@@ -40,6 +41,8 @@ RENAMES = [
     (re.compile(r"\bSGJ_Settings\b"), "RXP_SGJ_Settings"),
     (re.compile(r"\bSharpiesGearJudgeDB\b"), "RXP_SGJ_DB"),
 ]
+# Asset paths of the standalone addon -> the embedded copy (same separator style).
+ASSET_PATH = re.compile(r"AddOns(\\\\|\\|/)SharpiesGearJudge(\\\\|\\|/)")
 
 
 class VendorError(Exception):
@@ -84,6 +87,7 @@ def transform_lua(text, relpath):
             line = "-- vendor: removed _G[addonName] = MSC"
         for pattern, repl in RENAMES:
             line = pattern.sub(repl, line)
+        line = ASSET_PATH.sub(lambda m: "AddOns{0}RXPGuides{0}SGJ{1}".format(m.group(1), m.group(2)), line)
         out.append(line)
     return GUARD + "\n".join(out)
 

@@ -1097,7 +1097,7 @@ function MSC.UpdateAllQuestOverlays()
             
             -- Set Z-Index high enough to sit safely above backgrounds
             btn.SGJ_OverlayFrame:SetFrameLevel(btn:GetFrameLevel() + 10)
-            btn.SGJ_Overlay:SetTexture("Interface\\AddOns\\SharpiesGearJudge\\Textures\\" .. (overlayType == "UP" and "Upgrade.png" or "Downgrade.png"))
+            btn.SGJ_Overlay:SetTexture("Interface\\AddOns\\RXPGuides\\SGJ\\Textures\\" .. (overlayType == "UP" and "Upgrade.png" or "Downgrade.png"))
             btn.SGJ_OverlayFrame:Show()
         end
     end
@@ -1155,7 +1155,7 @@ function MSC.UpdateMerchantOverlays()
                         itemButton.SGJ_Overlay:SetSize(22, 22) 
                         itemButton.SGJ_Overlay:SetPoint("TOPRIGHT", 2, 2)
                     end
-                    itemButton.SGJ_Overlay:SetTexture("Interface\\AddOns\\SharpiesGearJudge\\Textures\\" .. (overlayType == "UP" and "Upgrade.png" or "Downgrade.png"))
+                    itemButton.SGJ_Overlay:SetTexture("Interface\\AddOns\\RXPGuides\\SGJ\\Textures\\" .. (overlayType == "UP" and "Upgrade.png" or "Downgrade.png"))
                     itemButton.SGJ_Overlay:Show()
                 end
             end
@@ -1221,7 +1221,7 @@ function MSC.UpdateLootRollOverlays()
                             iconFrame.SGJ_Overlay:SetPoint("TOPRIGHT", iconFrame.SGJ_OverlayFrame, "TOPRIGHT", 4, 4)
                         end
                         
-                        iconFrame.SGJ_Overlay:SetTexture("Interface\\AddOns\\SharpiesGearJudge\\Textures\\" .. (overlayType == "UP" and "Upgrade.png" or "Downgrade.png"))
+                        iconFrame.SGJ_Overlay:SetTexture("Interface\\AddOns\\RXPGuides\\SGJ\\Textures\\" .. (overlayType == "UP" and "Upgrade.png" or "Downgrade.png"))
                         iconFrame.SGJ_OverlayFrame:Show()
                     end
                 end
@@ -1263,7 +1263,7 @@ local function SetCraftArrow(frame, show, size, point, x, y)
         frame.SGJ_Overlay = frame:CreateTexture(nil, "OVERLAY", nil, 7)
         frame.SGJ_Overlay:SetSize(size, size)
         frame.SGJ_Overlay:SetPoint(point, frame, point, x, y)
-        frame.SGJ_Overlay:SetTexture("Interface\\AddOns\\SharpiesGearJudge\\Textures\\Upgrade.png")
+        frame.SGJ_Overlay:SetTexture("Interface\\AddOns\\RXPGuides\\SGJ\\Textures\\Upgrade.png")
     end
     frame.SGJ_Overlay:Show()
 end
@@ -1498,7 +1498,7 @@ function MSC.SetBagArrow(button, overlayType, place)
     end
 
     button.SGJ_OverlayFrame:SetFrameLevel(button:GetFrameLevel() + 10)
-    button.SGJ_Overlay:SetTexture("Interface\\AddOns\\SharpiesGearJudge\\Textures\\" .. (overlayType == "UP" and "Upgrade.png" or "Downgrade.png"))
+    button.SGJ_Overlay:SetTexture("Interface\\AddOns\\RXPGuides\\SGJ\\Textures\\" .. (overlayType == "UP" and "Upgrade.png" or "Downgrade.png"))
     button.SGJ_Overlay:Show()
     button.SGJ_OverlayFrame:Show()
 end
@@ -1848,7 +1848,7 @@ BagHookFrame:SetScript("OnEvent", function(self, event)
                 local verdict = GetVerdict(details.itemLink)
                 if verdict == nil then return nil end
                 if not verdict then return false end
-                arrow:SetTexture("Interface\\AddOns\\SharpiesGearJudge\\Textures\\" .. (verdict == "UP" and "Upgrade.png" or "Downgrade.png"))
+                arrow:SetTexture("Interface\\AddOns\\RXPGuides\\SGJ\\Textures\\" .. (verdict == "UP" and "Upgrade.png" or "Downgrade.png"))
                 return true
             end, function(itemButton)
                 local arrow = itemButton:CreateTexture(nil, "OVERLAY")
@@ -2089,7 +2089,7 @@ BagHookFrame:SetScript("OnEvent", function(self, event)
             end
             local holder = b.SGJ_NpcArrow
             holder:SetFrameLevel(b:GetFrameLevel() + 10)
-            holder.tex:SetTexture("Interface\\AddOns\\SharpiesGearJudge\\Textures\\" .. (overlayType == "UP" and "Upgrade.png" or "Downgrade.png"))
+            holder.tex:SetTexture("Interface\\AddOns\\RXPGuides\\SGJ\\Textures\\" .. (overlayType == "UP" and "Upgrade.png" or "Downgrade.png"))
             holder:Show()
         end
 
@@ -2158,7 +2158,7 @@ BagHookFrame:SetScript("OnEvent", function(self, event)
                 local tex = holder:CreateTexture(nil, "OVERLAY", nil, 7)
                 tex:SetSize(14, 14)
                 tex:SetPoint("TOPRIGHT", holder, "TOPRIGHT", 4, 4)
-                tex:SetTexture("Interface\\AddOns\\SharpiesGearJudge\\Textures\\Upgrade.png")
+                tex:SetTexture("Interface\\AddOns\\RXPGuides\\SGJ\\Textures\\Upgrade.png")
                 b.SGJ_CraftArrow = holder
             end
             b.SGJ_CraftArrow:SetFrameLevel(b:GetFrameLevel() + 10)
@@ -2303,11 +2303,11 @@ function MSC_StatRingMixin:ApplyArt(statType)
     local targetTexture
     if statType == "Current Defense" or statType == "Crush Cap" or statType == "Defense"
         or statType == "Dodge" or statType == "Parry" or statType == "Block" then
-        targetTexture = "Interface\\AddOns\\SharpiesGearJudge\\Textures\\Ring_Rune.tga"
+        targetTexture = "Interface\\AddOns\\RXPGuides\\SGJ\\Textures\\Ring_Rune.tga"
     elseif string_find(statType, "Hit") or string_find(statType, "Haste") or string_find(statType, "Power") or statType == "Healing" then
-        targetTexture = "Interface\\AddOns\\SharpiesGearJudge\\Textures\\Ring_Swirl.tga"
+        targetTexture = "Interface\\AddOns\\RXPGuides\\SGJ\\Textures\\Ring_Swirl.tga"
     elseif string_find(statType, "Crit") or statType == "Expertise" then
-        targetTexture = "Interface\\AddOns\\SharpiesGearJudge\\Textures\\Ring_Sun.tga"
+        targetTexture = "Interface\\AddOns\\RXPGuides\\SGJ\\Textures\\Ring_Sun.tga"
     else
         targetTexture = "Interface\\Common\\RingBorder"
     end
@@ -3630,7 +3630,7 @@ function MSC.ToggleMainMenu()
     f.Bg = f:CreateTexture(nil, "BACKGROUND", nil, -8)
     local _, class = UnitClass("player")
     local fixedClass = class:sub(1,1):upper() .. class:sub(2):lower()
-    f.Bg:SetTexture("Interface\\AddOns\\SharpiesGearJudge\\Textures\\" .. fixedClass .. ".tga")
+    f.Bg:SetTexture("Interface\\AddOns\\RXPGuides\\SGJ\\Textures\\" .. fixedClass .. ".tga")
     f.Bg:SetPoint("CENTER", f, "CENTER", 0, 0); f.Bg:SetSize(640, 640); f.Bg:SetAlpha(0.7)
     f.Overlay = f:CreateTexture(nil, "BACKGROUND", nil, -7)
     f.Overlay:SetAllPoints(); f.Overlay:SetColorTexture(unpack(T.Window))

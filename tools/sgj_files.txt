@@ -54,3 +54,20 @@ Interface.lua
 LootToast.lua
 Judge.lua
 SGJ_API.lua
+# Textures referenced by the engine (Interface\AddOns\RXPGuides\SGJ\Textures\ after the asset-path rewrite)
+Textures\Downgrade.png
+Textures\Druid.tga
+Textures\Hunter.tga
+Textures\Mage.tga
+Textures\Paladin.tga
+Textures\Priest.tga
+Textures\Ring_BG.tga
+Textures\Ring_Fill.tga
+Textures\Ring_Rune.tga
+Textures\Ring_Sun.tga
+Textures\Ring_Swirl.tga
+Textures\Rogue.tga
+Textures\Shaman.tga
+Textures\Upgrade.png
+Textures\Warlock.tga
+Textures\Warrior.tga

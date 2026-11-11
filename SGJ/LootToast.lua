@@ -16,7 +16,7 @@ local L = MSC.L
 
 local SHOW_SECONDS = 8      -- then it fades (held while the mouse is over it)
 local MAX_SHOWN = 3         -- alerts on screen at once; older ones close first
-local TEX_UP = "Interface\\AddOns\\SharpiesGearJudge\\Textures\\Upgrade.png"
+local TEX_UP = "Interface\\AddOns\\RXPGuides\\SGJ\\Textures\\Upgrade.png"
 
 -- A Lua pattern from a Blizzard format string, so the loot messages match in
 -- every language (the same conversion as the XP plugin's).
